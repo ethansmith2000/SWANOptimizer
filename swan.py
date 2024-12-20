@@ -102,11 +102,6 @@ class SWAN(torch.optim.Optimizer):
                 if g.ndim > 2:
                     g = g.view(g.size(0), -1)
 
-                # norm
-                # effectively layernorm for gradient
-                g = gradnorm(g)
-                g_norm = g.norm()
-
                 # momentum
                 # compared to muon, momentum is disabled typically
                 state = self.state[param]
@@ -120,14 +115,23 @@ class SWAN(torch.optim.Optimizer):
                         g = g.add(buf, alpha=momentum)
                     else:
                         g = buf
+
+                # norm
+                # effectively layernorm for gradient
+                # this should more or less be centered around 0 as is, but still need to rescale
+                g = gradnorm(g)
+
+                # get prewhitened gradient norm
+                g_norm = g.norm()
                 
                 # whiten
-                # a different form of newton schulz is usd here
+                # OG form of newton schulz is used here
                 w_del = gradwhiten(g, ns_steps=group['ns_steps'], beta=group['beta'])
 
                 # post norm
                 # instead of rescaling by dimensions of matrix which is a constant value, we rescale such that the 
-                # norm of the whitened gradient is the same as the norm of the gradient
+                # norm of the whitened gradient is the same as the norm of the prewhitened gradient
+                # However, since this is the norm post applyin layer norm this should probably be a fairly constant value anyway...
                 if group['post_norm']:
                     w_del *= (g_norm / w_del.norm())
 
