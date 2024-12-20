@@ -28,7 +28,7 @@ def gradnorm(grad):
     """
     Implements the GradNorm operator as described in Algorithm 3.
 
-    basically layernorm for a radient, center and divide by the stddev
+    basically layernorm for a gradient, center and divide by the stddev
 
     Args:
         grad: Input matrix G of shape (m x n)
@@ -131,7 +131,7 @@ class SWAN(torch.optim.Optimizer):
                 # post norm
                 # instead of rescaling by dimensions of matrix which is a constant value, we rescale such that the 
                 # norm of the whitened gradient is the same as the norm of the prewhitened gradient
-                # However, since this is the norm post applyin layer norm this should probably be a fairly constant value anyway...
+                # However, since this is the norm after having applied layer norm, this should probably be a fairly constant value anyway...
                 if group['post_norm']:
                     w_del *= (g_norm / w_del.norm())
 
