@@ -56,18 +56,20 @@ def gradwhiten(grad, ns_steps=6, beta=0.5):
         Whitened gradient ZG where Z approximates (GG^T)^(-1/2)
     """
     # initialize
-    Y = grad @ grad.T
+    grad = grad / grad.norm()
+    Y = grad @ grad.T #+ 1e-6 * torch.eye(grad.size(0), device=grad.device, dtype=grad.dtype)
     Z = torch.eye(Y.size(0), device=grad.device, dtype=grad.dtype)
-    I3 = 3 * torch.eye(Y.size(0), device=grad.device, dtype=grad.dtype)
+    I3 = 3 * Z
     
     #  Newton-Schulz iterations
     for _ in range(ns_steps):
         ZY = Z @ Y
-        I_minus_ZY = I3 - ZY
-        Y = beta * Y @ I_minus_ZY
-        Z = beta * I_minus_ZY @ Z
+        I3_minus_ZY = I3 - ZY
+        Y = beta * (Y @ I3_minus_ZY)
+        Z = beta * (I3_minus_ZY @ Z)
 
-    return Z @ grad
+    out = Z @ grad
+    return out
 
 
 class SWAN(torch.optim.Optimizer):
